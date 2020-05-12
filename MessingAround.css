@@ -1,0 +1,13 @@
+.{
+	margin:0px;
+	padding:0px;
+	font-family: sans-serif;
+}
+
+#sidebar{
+	postion: absolute;
+	width:200px;
+	height: 100%;
+	background: #151719;
+	z-index: 10;
+}
