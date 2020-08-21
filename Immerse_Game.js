@@ -1,17 +1,22 @@
+//Allow for text to populate circles.
+
+
 var score = 0;
-var masterBubble
+var masterBubble;
 var count = 0;
 var bubbles = [];
 var bubblesIntersect =[];
 
-function Bubble(x,y,r){
+function Bubble(id,x,y){
 	var move = 0;
 	var height = 100;
 	var zoom = 0;
+	this.id = id
 	this.x = x;
 	this.y = y;
-	this.r = 48;
+	this.r = 100;
 	this.col = 0;
+	this.letter = 0;
 	this.move = 10;
 	this.zoom = 0;
 
@@ -49,13 +54,22 @@ function Bubble(x,y,r){
 }
 
 function createBubble(bubbleCount){
-	for (var i = 0; i < bubbleCount; i++){
-		bubbles[i] = new Bubble (random(width),random(height));
+	for (var i = 0; i <= bubbleCount; i++){
+		bubbles[i] = new Bubble (i,random(width),random(height));
 	}
-	masterBubble = bubbles[0];
-	bubbles.pop(masterBubble)
-	masterBubble.r = 10;
-	masterBubbleColor = 0;
+	
+	console.log('Bubbles: ', bubbles.length)
+
+	masterBubble = bubbles.shift();
+
+	masterBubble.r = 20;
+	masterBubbleColor = 2;
+	console.log('Master Bubble: ', masterBubble)
+	console.log('Target Bubbles:',bubbles.length)
+
+
+	console.log('Target Bubbles:',bubbles)
+	console.log('Master Bubble:',masterBubble)
 }
 
 function replaceBubble(bubbles, bubbleIntersect){
@@ -72,7 +86,7 @@ function replaceBubble(bubbles, bubbleIntersect){
 
 function setup() {
 	createCanvas(window.screen.width, window.screen.height);
-	createBubble(8)
+	createBubble(prompt('Enter How Many Bubbles'))
 
 }
 
@@ -87,7 +101,7 @@ function draw(){
 
   	textSize(32);
   	fill(masterBubble.col);
-  	text('Time: '+ round(count),50,80);
+  	text('Time: '+ round(count),50,100);
 
 
 
@@ -124,16 +138,19 @@ function draw(){
 
 
 	for (var i = 0; i < bubbles.length;i++){
+		
+		masterBubble.update();
+		masterBubble.display();
+
 		bubbles[i].update();
 		bubbles[i].display();
 
-		if (masterBubble.intersect(bubbles[i]) && i != 0){
+		if (masterBubble.intersect(bubbles[i])){
 			masterBubbleColor = masterBubble.changeColor();
 			bubbles[i].col = masterBubbleColor;
 			bubblesIntersect.push(bubbles[i])
 			score = score + 1;
-			console.log(bubbles);
-			console.log(bubblesIntersect);
+			console.log('Bubble Match: ', bubblesIntersect);
 	
 
 
@@ -146,6 +163,14 @@ function draw(){
 			bubbles[i].x = window.screen.width;
 		}
 
+		if (masterBubble.x > window.screen.width){
+			masterBubble.x = 0;
+
+		}
+		else if (masterBubble.x < 0){
+			masterBubble.x = window.screen.width;
+		}
+
 	}
 
 }
@@ -154,21 +179,26 @@ function draw(){
 function keyPressed(zoom){
   if(keyCode === RIGHT_ARROW){
     masterBubble.move = 1; 
-    return masterBubble.move;
+    return false;
   }
  
   else if (keyCode === LEFT_ARROW){
     masterBubble.move = -2;
-    return masterBubble.move;
+    return false;
   }
   else if (keyCode === UP_ARROW){
     masterBubble.zoom = -1;
+    return false;
   }
   else if (keyCode === DOWN_ARROW){
     masterBubble.zoom = 1;
+    return false;
   }
   else if (keyCode === 97){
     exampleBubble.move = -1;
+    return false;
+
+  return false; 
   }
   
 /*
@@ -193,10 +223,6 @@ function keyPressed(zoom){
   else if (keyCode == 82){
     factor = .001;
   }*/
-  else{
-    return masterBubble.x;
-  }
-		console.log(bubbles);
 
 }
 function keyReleased(){
@@ -204,6 +230,7 @@ function keyReleased(){
     	if (masterBubble.x < window.screen.width){
         	masterBubble.x = masterBubble.x + 1;
         	move = 1;
+        	return false;
 		}
 
     }
@@ -211,24 +238,28 @@ function keyReleased(){
     	if (masterBubble.x !== 0){
         	masterBubble.x = masterBubble.x - 2;
         	move = -2
+        	return false;
     	} 
   	}
 
 	else if (keyCode === UP_ARROW){
     	if (masterBubble.r !== 0){
       		masterBubble.r = masterBubble.r - 1;
+      		return false;
     }
     
   }
 	else if (keyCode === DOWN_ARROW){
 		if (masterBubble.r !== window.screen.height){
     	masterBubble.r = masterBubble.r + 1;
+    	return false;
     }
+
+    return false;
+
 }
-    else if (keyCode == 82){
-    	//Reset
-    	createBubble();
-  	}
+
+
   	/*
   	else if (keyCode == 82){
     	exampleBubble.move += 1;
