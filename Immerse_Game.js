@@ -1,75 +1,126 @@
-//Allow for text to populate circles.
+// Allow for text to populate circles.
 
-
-var score = 0;
 var masterBubble;
+var bubbles;
+var score = 0;
 var count = 0;
-var bubbles = [];
-var bubblesIntersect =[];
+var bubblesIntersect = new Set()
 
-function Bubble(id,x,y){
-	var move = 0;
-	var height = 100;
-	var zoom = 0;
-	this.id = id
-	this.x = x;
-	this.y = y;
-	this.r = 100;
-	this.col = 0;
-	this.letter = 0;
-	this.move = 10;
-	this.zoom = 0;
-
-
-	this.changeColor = function(){
-		this.col = color(random(255),random(255),random(255))
-		return this.col
-	}
-
-	this.display = function(){
-		stroke(255)
-		fill(this.col)
-		ellipse(this.x,this.y,this.r*2,this.r*2)
-	}
-
-	this.update = function(){ 
-		this.x += this.move;
-		this.y = window.screen.height/2;
-		this.r = this.r;
-		return this.x;
-	}
-
-	this.intersect = function(other){
+class Bubble{
+	
+	constructor(id,x,y){
+		var move = 0;
+		var height = 100;
+		var zoom = 0;
 		
-		//{\sqrt  (}(x_{2}-x_{1})^{2}+(y_{2}-y_{1})^{2}).
+		this.id = id
+		
+		//Position and Size
+		
+		this.x = x;
+		this.y = y;
+		this.r = 100;
+		this.move = 3;
+		this.zoom = 0;
 
-		var d = dist(this.x,this.y,other.x,other.y);
-		if (d < this.r + other.r && this.r == other.r){
-			return true;
+		//Fill
+		this.col = 0;
+
+
+
+		this.changeColor = function(){
+			this.col = color(random(255),random(255),random(255))
+			return this.col
 		}
-		else{
-			return false
+
+		this.display = function(){
+
+
+			stroke(255)
+			fill(this.col)
+			ellipse(this.x,this.y,this.r*2,this.r*2)
+
+		}
+
+		this.update = function(){ 
+			this.x += this.move;
+			this.y = window.screen.height/2;
+			this.r = this.r;
+			return this.x;
+		}
+
+		this.intersect = function(other){
+			
+			//{\sqrt  (}(x_{2}-x_{1})^{2}+(y_{2}-y_{1})^{2}).
+
+			var d = dist(this.x,this.y,other.x,other.y);
+			if (d < this.r + other.r && this.r == other.r){
+				return true;
+			}
+			else{
+				return false
+			}
 		}
 	}
 }
 
-function createBubble(bubbleCount){
-	for (var i = 0; i <= bubbleCount; i++){
-		bubbles[i] = new Bubble (i,random(width),random(height));
+class TB extends Bubble {
+	constructor (id,x,y,word){
+
+		console.log(self)
+		var tb = super(id,x,y)
+		
+		this.word = word
+
+		this.display = function(){
+
+
+			stroke(255)
+			fill(this.col)
+			ellipse(this.x,this.y,this.r*2,this.r*2)
+
+			stroke(0)
+			textSize(50);
+			fill(0);
+			textAlign(CENTER);
+			text(this.word,this.x,this.y + (this.r/2));
+		}
+
 	}
-	
-	console.log('Bubbles: ', bubbles.length)
+}
 
-	masterBubble = bubbles.shift();
+function createBubble(kind,bubbleWords){
 
-	masterBubble.r = 20;
-	masterBubbleColor = 2;
-	console.log('Master Bubble: ', masterBubble)
-	console.log('Target Bubbles:',bubbles.length)
+	if (kind == 'MB'){
+		
+		var masterBubble = new Bubble(0,random(width),random(height),random)
 
+		masterBubble.r = 20;
 
-	console.log('Target Bubbles:',bubbles)
-	console.log('Master Bubble:',masterBubble)
+		masterBubble.col = 2;
+
+		console.log('Create MB: ', masterBubble)
+
+		return masterBubble;
+	}
+
+	else if (kind == 'TB'){
+
+		bubbles = [];
+
+		for (word in bubbleWords){
+
+			bubble = new TB (word,random(width),random(height),bubbleWords[word]);
+
+			bubbles.push(bubble)
+
+			console.log('Create TB: ',bubbles);
+		}
+
+		return bubbles
+
+	}
+
 }
 
 function replaceBubble(bubbles, bubbleIntersect){
@@ -79,34 +130,110 @@ function replaceBubble(bubbles, bubbleIntersect){
 
 		}
 	}
-	return bubbles
+	return bubbles;
 
 
 }
 
+//This Function needs is return undefined in Else Statement
+function getWords(table){
+
+	var words = [];
+	
+	//Select First Row of words file
+	row = table.getRow(0);
+
+	columnCount = table.getColumnCount()
+
+	console.log('Get Words: File Column Amount:',table.getColumnCount())
+
+	
+
+	for (var i = 0; i < columnCount;i++){
+
+		if (row.getString(i) === ""){
+			console.log('Get Words: Found Blank or None Type in Column');
+			return words;
+			
+		}
+
+		else{
+			words.push(row.getString(i));
+			console.log('Get Words: ',words);	
+		}
+
+	
+	
+	}
+	return words;
+
+
+	
+
+}
+
+
+
+function preload() {
+
+	async function getData(){
+
+		table = loadTable('Word_List.csv', 'csv', 'header');
+		console.log('Preload: ',table.get);
+		//console.log(table)
+
+	}
+
+	getData();
+}
+	
+
 function setup() {
+	
 	createCanvas(window.screen.width, window.screen.height);
-	createBubble(prompt('Enter How Many Bubbles'))
+
+	masterBubble = createBubble(kind='MB')
+	console.log('Setup: Returned MB ',masterBubble);
+	
+	var bubbleWords = getWords(table);
+	console.log('Setup: Returned TBs',bubbleWords);
+
+	bubbles = createBubble('TB',bubbleWords);
+	console.log('Setup: Returned TBs with Attrs', bubbles);
+
+
+	//createBubble(prompt('Enter How Many Bubbles'))
+
+	//for (bubble in bubbles){
+	//	assignBubbleLetter(bubble)
+	//}
 
 }
 
 function draw(){
 	background(0);
 
-	count += 1/60
+	//console.log(masterBubble)
+
+	count += 1/60;
 
 	textSize(32);
-  	fill(masterBubble.col);
-  	text('Score: '+ score,50,50);
+	fill(masterBubble.col);
+	text('Score: '+ score,60,50);
 
-  	textSize(32);
-  	fill(masterBubble.col);
-  	text('Time: '+ round(count),50,100);
-
-
+	textSize(32);
+	fill(masterBubble.col);
+	text('Time: '+ round(count),60,100);
 
 
-/*
+
+
+
+
+
+
+
+/* Troubleshoot move operations
   	textSize(32);
   	fill(masterBubble.r);
   	text('Master Bubble Zoom: '+ bubbles[0].zoom,50,80);
@@ -148,8 +275,8 @@ function draw(){
 		if (masterBubble.intersect(bubbles[i])){
 			masterBubbleColor = masterBubble.changeColor();
 			bubbles[i].col = masterBubbleColor;
-			bubblesIntersect.push(bubbles[i])
-			score = score + 1;
+			bubblesIntersect.add(bubbles[i])
+			score = bubblesIntersect.size;
 			console.log('Bubble Match: ', bubblesIntersect);
 	
 
@@ -175,6 +302,31 @@ function draw(){
 
 }
 
+function keyIsDown(){
+	if(keyCode === RIGHT_ARROW){
+    	return false;
+  }
+ 
+	else if (keyCode === LEFT_ARROW){
+    	return false;
+  }
+  
+  	else if (keyCode === UP_ARROW){
+    
+    return false;
+  }
+  	else if (keyCode === DOWN_ARROW){
+    
+    return false;
+  }
+  	else if (keyCode === 97){
+    
+    	return false;
+
+  	return false; 
+  }
+}
+
 //Move master circle
 function keyPressed(zoom){
   if(keyCode === RIGHT_ARROW){
@@ -186,19 +338,20 @@ function keyPressed(zoom){
     masterBubble.move = -2;
     return false;
   }
+
   else if (keyCode === UP_ARROW){
     masterBubble.zoom = -1;
     return false;
   }
+
   else if (keyCode === DOWN_ARROW){
     masterBubble.zoom = 1;
     return false;
   }
+
   else if (keyCode === 97){
     exampleBubble.move = -1;
     return false;
-
-  return false; 
   }
   
 /*
@@ -226,6 +379,7 @@ function keyPressed(zoom){
 
 }
 function keyReleased(){
+	
 	if(keyCode === RIGHT_ARROW){
     	if (masterBubble.x < window.screen.width){
         	masterBubble.x = masterBubble.x + 1;
@@ -233,31 +387,29 @@ function keyReleased(){
         	return false;
 		}
 
-    }
+	}
+	
 	else if (keyCode === LEFT_ARROW){
     	if (masterBubble.x !== 0){
         	masterBubble.x = masterBubble.x - 2;
         	move = -2
         	return false;
-    	} 
+		} 
   	}
 
 	else if (keyCode === UP_ARROW){
     	if (masterBubble.r !== 0){
       		masterBubble.r = masterBubble.r - 1;
       		return false;
-    }
+		}
     
-  }
+  	}
 	else if (keyCode === DOWN_ARROW){
 		if (masterBubble.r !== window.screen.height){
-    	masterBubble.r = masterBubble.r + 1;
-    	return false;
-    }
-
-    return false;
-
-}
+    		masterBubble.r = masterBubble.r + 1;
+    		return false;
+    	}
+	}
 
 
   	/*
